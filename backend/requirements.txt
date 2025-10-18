@@ -31,6 +31,5 @@ pytest
 
 #SQL Validator 
 sqlparse
-re
 
 numpy
