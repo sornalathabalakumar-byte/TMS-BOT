@@ -8,7 +8,7 @@ st.set_page_config(page_title="TMS Bot (Conversational)", page_icon="🤖", layo
 # --- UI Components ---
 st.title("TMS Bot: Your Conversational Database Assistant 🤖")
 
-API_URL = "http://127.0.0.1:8000/query"
+API_URL = "https://tms-bot-h6ld.onrender.com/query"
 
 # --- Initialize Chat History ---
 if "messages" not in st.session_state:
@@ -51,4 +51,5 @@ if prompt := st.chat_input("Ask a question about your data..."):
         except requests.exceptions.ConnectionError:
             st.error("Connection Error: Could not connect to the backend. Is the FastAPI server running?")
         except Exception as e:
+
             st.error(f"An unexpected error occurred: {e}")
