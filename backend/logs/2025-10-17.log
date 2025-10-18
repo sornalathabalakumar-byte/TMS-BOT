@@ -1,0 +1,1757 @@
+INFO | 2025-10-17 14:24:36 | main | 155 | Received question: 'how many batches were processed last week?'
+INFO | 2025-10-17 14:24:36 | main | 156 | Full history contains 1 messages.
+INFO | 2025-10-17 14:24:36 | main | 161 | Processed question for date handling: 'how many batches were processed between the dates 20251006 and 20251012?'
+INFO | 2025-10-17 14:24:37 | main | 165 | Retrieved Schemas:
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+---
+Table: PSGTMS.TDF_BatchValues
+Description: This is a lookup table that contains the descriptions for different batch status codes.
+Columns:
+- BatchValue (int, primary key): The numeric code for a batch status.
+- BatchValueDesc (varchar(50)): The plain English description of the status  A value of 'Process Done' means the batch is processed.
+INFO | 2025-10-17 14:24:38 | main | 175 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.BATCHFILE WHERE ProcessDate >= '20251010' AND ProcessDate <= '20251016';
+INFO | 2025-10-17 14:24:38 | main | 184 | SQL query passed validation.
+INFO | 2025-10-17 14:24:38 | main | 193 | Query executed successfully.
+INFO | 2025-10-17 14:24:39 | main | 205 | Generated Summary: No batches were processed last week.
+INFO | 2025-10-17 14:24:39 | main | 213 | Successfully processed query and returning response.
+INFO | 2025-10-17 14:25:21 | main | 155 | Received question: 'ok '
+INFO | 2025-10-17 14:25:21 | main | 156 | Full history contains 3 messages.
+INFO | 2025-10-17 14:25:21 | main | 161 | Processed question for date handling: 'ok '
+INFO | 2025-10-17 14:25:22 | main | 165 | Retrieved Schemas:
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+---
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+INFO | 2025-10-17 14:25:23 | main | 175 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.BATCHFILE WHERE ProcessDate >= CONVERT(int, CONVERT(varchar, GETDATE()-7, 112)) AND ProcessDate < CONVERT(int, CONVERT(varchar, GETDATE(), 112));
+INFO | 2025-10-17 14:25:23 | main | 184 | SQL query passed validation.
+INFO | 2025-10-17 14:25:23 | main | 193 | Query executed successfully.
+INFO | 2025-10-17 14:25:24 | main | 205 | Generated Summary: No batches were processed last week.
+INFO | 2025-10-17 14:25:24 | main | 213 | Successfully processed query and returning response.
+INFO | 2025-10-17 15:58:07 | main | 155 | Received question: 'how many transactions were processed last month?'
+INFO | 2025-10-17 15:58:07 | main | 156 | Full history contains 5 messages.
+INFO | 2025-10-17 15:58:07 | main | 161 | Processed question for date handling: 'how many transactions were processed between the dates 20250901 and 20250930?'
+INFO | 2025-10-17 15:58:08 | main | 165 | Retrieved Schemas:
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+---
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+INFO | 2025-10-17 15:58:09 | main | 175 | Generated SQL: SELECT SUM(TotalTrans) FROM PSGTMS.BATCHFILE WHERE ProcessDate >= '20250901' AND ProcessDate < '20251001';
+INFO | 2025-10-17 15:58:09 | main | 184 | SQL query passed validation.
+INFO | 2025-10-17 15:58:09 | main | 193 | Query executed successfully.
+INFO | 2025-10-17 15:58:10 | main | 205 | Generated Summary: A total of 541 transactions were processed last month.
+INFO | 2025-10-17 15:58:10 | main | 213 | Successfully processed query and returning response.
+INFO | 2025-10-17 16:00:10 | main | 155 | Received question: 'is there any rejected transactions?'
+INFO | 2025-10-17 16:00:10 | main | 156 | Full history contains 7 messages.
+INFO | 2025-10-17 16:00:10 | main | 161 | Processed question for date handling: 'is there any rejected transactions?'
+INFO | 2025-10-17 16:00:11 | main | 165 | Retrieved Schemas:
+Table: PSGTMS.REJREASON
+Description: A lookup table for transaction rejection reasons. JOIN with DetailFile1 on RejectReason to find out why a transaction failed.
+Columns:
+- PgmID (int, primary key): The program ID component of the reason code. Used to join with DetailFile1.RejectPgm.
+- RejID (int, primary key): The rejection ID component of the reason code. Used to join with DetailFile1.RejectReason.
+- RejDesc (varchar): The text description of why an item was rejected (e.g., 'Invalid Amount', 'Signature Missing').
+---
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+INFO | 2025-10-17 16:00:13 | main | 175 | Generated SQL: Yes, there were rejected transactions.
+WARNING | 2025-10-17 16:00:13 | main | 181 | Validation Failed for SQL 'Yes, there were rejected transactions.': Validation failed: Query must be a SELECT statement.
+INFO | 2025-10-17 16:10:47 | main | 155 | Received question: 'how many batches are processed last month?'
+INFO | 2025-10-17 16:10:47 | main | 156 | Full history contains 1 messages.
+INFO | 2025-10-17 16:10:47 | main | 161 | Processed question for date handling: 'how many batches are processed between the dates 20250901 and 20250930?'
+INFO | 2025-10-17 16:10:49 | main | 165 | Retrieved Schemas:
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+---
+Table: PSGTMS.TDF_BatchValues
+Description: This is a lookup table that contains the descriptions for different batch status codes.
+Columns:
+- BatchValue (int, primary key): The numeric code for a batch status.
+- BatchValueDesc (varchar(50)): The plain English description of the status  A value of 'Process Done' means the batch is processed.
+INFO | 2025-10-17 16:10:50 | main | 175 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.BATCHFILE WHERE ProcessDate >= '20250901' AND ProcessDate < '20251001';
+INFO | 2025-10-17 16:10:50 | main | 184 | SQL query passed validation.
+INFO | 2025-10-17 16:10:50 | main | 193 | Query executed successfully.
+INFO | 2025-10-17 16:10:51 | main | 205 | Generated Summary: A total of 43 batches were processed last month.
+INFO | 2025-10-17 16:10:51 | main | 213 | Successfully processed query and returning response.
+INFO | 2025-10-17 16:11:55 | main | 155 | Received question: 'then , how many transactions were there?'
+INFO | 2025-10-17 16:11:55 | main | 156 | Full history contains 3 messages.
+INFO | 2025-10-17 16:11:55 | main | 161 | Processed question for date handling: 'then , how many transactions were there?'
+INFO | 2025-10-17 16:11:56 | main | 165 | Retrieved Schemas:
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+---
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+INFO | 2025-10-17 16:11:57 | main | 175 | Generated SQL: SELECT SUM(TotalTrans) FROM PSGTMS.BATCHFILE WHERE ProcessDate >= '20250901' AND ProcessDate < '20251001';
+INFO | 2025-10-17 16:11:57 | main | 184 | SQL query passed validation.
+INFO | 2025-10-17 16:11:57 | main | 193 | Query executed successfully.
+INFO | 2025-10-17 16:11:58 | main | 205 | Generated Summary: A total of 541 transactions were processed last month.
+INFO | 2025-10-17 16:11:58 | main | 213 | Successfully processed query and returning response.
+INFO | 2025-10-17 16:13:49 | main | 155 | Received question: 'any transactions got rejected ?'
+INFO | 2025-10-17 16:13:49 | main | 156 | Full history contains 5 messages.
+INFO | 2025-10-17 16:13:49 | main | 161 | Processed question for date handling: 'any transactions got rejected ?'
+INFO | 2025-10-17 16:13:50 | main | 165 | Retrieved Schemas:
+Table: PSGTMS.REJREASON
+Description: A lookup table for transaction rejection reasons. JOIN with DetailFile1 on RejectReason to find out why a transaction failed.
+Columns:
+- PgmID (int, primary key): The program ID component of the reason code. Used to join with DetailFile1.RejectPgm.
+- RejID (int, primary key): The rejection ID component of the reason code. Used to join with DetailFile1.RejectReason.
+- RejDesc (varchar): The text description of why an item was rejected (e.g., 'Invalid Amount', 'Signature Missing').
+---
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+INFO | 2025-10-17 16:13:51 | main | 175 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.DetailFile1 WHERE Reject = 1;
+INFO | 2025-10-17 16:13:51 | main | 184 | SQL query passed validation.
+INFO | 2025-10-17 16:13:51 | main | 193 | Query executed successfully.
+INFO | 2025-10-17 16:13:52 | main | 205 | Generated Summary: There were no rejected transactions last month.
+INFO | 2025-10-17 16:13:52 | main | 213 | Successfully processed query and returning response.
+INFO | 2025-10-17 16:23:50 | main | 155 | Received question: 'how many batches were processed last month?'
+INFO | 2025-10-17 16:23:50 | main | 156 | Full history contains 1 messages.
+INFO | 2025-10-17 16:23:50 | main | 161 | Processed question for date handling: 'how many batches were processed between the dates 20250901 and 20250930?'
+INFO | 2025-10-17 16:23:51 | main | 165 | Retrieved Schemas:
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+---
+Table: PSGTMS.TDF_BatchValues
+Description: This is a lookup table that contains the descriptions for different batch status codes.
+Columns:
+- BatchValue (int, primary key): The numeric code for a batch status.
+- BatchValueDesc (varchar(50)): The plain English description of the status  A value of 'Process Done' means the batch is processed.
+INFO | 2025-10-17 16:23:52 | main | 175 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.BATCHFILE WHERE ProcessDate >= '20250901' AND ProcessDate < '20251001';
+INFO | 2025-10-17 16:23:52 | main | 184 | SQL query passed validation.
+INFO | 2025-10-17 16:23:53 | main | 193 | Query executed successfully.
+INFO | 2025-10-17 16:23:54 | main | 205 | Generated Summary: A total of 43 batches were processed last month.
+INFO | 2025-10-17 16:23:54 | main | 213 | Successfully processed query and returning response.
+INFO | 2025-10-17 16:24:16 | main | 155 | Received question: 'how many transactions were there?'
+INFO | 2025-10-17 16:24:16 | main | 156 | Full history contains 3 messages.
+INFO | 2025-10-17 16:24:16 | main | 161 | Processed question for date handling: 'how many transactions were there?'
+INFO | 2025-10-17 16:24:17 | main | 165 | Retrieved Schemas:
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+---
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+INFO | 2025-10-17 16:24:18 | main | 175 | Generated SQL: SELECT SUM(TotalTrans) FROM PSGTMS.BATCHFILE WHERE ProcessDate >= '20250901' AND ProcessDate < '20251001';
+INFO | 2025-10-17 16:24:18 | main | 184 | SQL query passed validation.
+INFO | 2025-10-17 16:24:18 | main | 193 | Query executed successfully.
+INFO | 2025-10-17 16:24:19 | main | 205 | Generated Summary: A total of 541 transactions were processed last month.
+INFO | 2025-10-17 16:24:19 | main | 213 | Successfully processed query and returning response.
+INFO | 2025-10-17 16:24:40 | main | 155 | Received question: 'is there any rejected transaction?'
+INFO | 2025-10-17 16:24:40 | main | 156 | Full history contains 5 messages.
+INFO | 2025-10-17 16:24:40 | main | 161 | Processed question for date handling: 'is there any rejected transaction?'
+INFO | 2025-10-17 16:24:41 | main | 165 | Retrieved Schemas:
+Table: PSGTMS.REJREASON
+Description: A lookup table for transaction rejection reasons. JOIN with DetailFile1 on RejectReason to find out why a transaction failed.
+Columns:
+- PgmID (int, primary key): The program ID component of the reason code. Used to join with DetailFile1.RejectPgm.
+- RejID (int, primary key): The rejection ID component of the reason code. Used to join with DetailFile1.RejectReason.
+- RejDesc (varchar): The text description of why an item was rejected (e.g., 'Invalid Amount', 'Signature Missing').
+---
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+INFO | 2025-10-17 16:24:43 | main | 175 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.DetailFile1 WHERE Reject = 1;
+INFO | 2025-10-17 16:24:43 | main | 184 | SQL query passed validation.
+INFO | 2025-10-17 16:24:43 | main | 193 | Query executed successfully.
+INFO | 2025-10-17 16:24:44 | main | 205 | Generated Summary: No rejected transactions were found last month.
+INFO | 2025-10-17 16:24:44 | main | 213 | Successfully processed query and returning response.
+INFO | 2025-10-17 16:27:23 | main | 155 | Received question: 'how many batches were processed last month'
+INFO | 2025-10-17 16:27:23 | main | 156 | Full history contains 1 messages.
+INFO | 2025-10-17 16:27:23 | main | 161 | Processed question for date handling: 'how many batches were processed between the dates 20250901 and 20250930'
+INFO | 2025-10-17 16:27:24 | main | 165 | Retrieved Schemas:
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+---
+Table: PSGTMS.TDF_BatchValues
+Description: This is a lookup table that contains the descriptions for different batch status codes.
+Columns:
+- BatchValue (int, primary key): The numeric code for a batch status.
+- BatchValueDesc (varchar(50)): The plain English description of the status  A value of 'Process Done' means the batch is processed.
+INFO | 2025-10-17 16:27:25 | main | 175 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.BATCHFILE WHERE ProcessDate >= '20230901' AND ProcessDate <= '20230930';
+INFO | 2025-10-17 16:27:25 | main | 184 | SQL query passed validation.
+INFO | 2025-10-17 16:27:25 | main | 193 | Query executed successfully.
+INFO | 2025-10-17 16:27:26 | main | 205 | Generated Summary: A total of 490 batches were processed last month.
+INFO | 2025-10-17 16:27:26 | main | 213 | Successfully processed query and returning response.
+INFO | 2025-10-17 16:29:59 | main | 155 | Received question: 'how many transactions were there ?'
+INFO | 2025-10-17 16:29:59 | main | 156 | Full history contains 3 messages.
+INFO | 2025-10-17 16:29:59 | main | 161 | Processed question for date handling: 'how many transactions were there ?'
+INFO | 2025-10-17 16:30:01 | main | 165 | Retrieved Schemas:
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+---
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+INFO | 2025-10-17 16:30:02 | main | 175 | Generated SQL: SELECT SUM(TotalTrans) FROM PSGTMS.BATCHFILE WHERE ProcessDate >= '20250901' AND ProcessDate < '20251001';
+INFO | 2025-10-17 16:30:02 | main | 184 | SQL query passed validation.
+INFO | 2025-10-17 16:30:02 | main | 193 | Query executed successfully.
+INFO | 2025-10-17 16:30:03 | main | 205 | Generated Summary: A total of 541 transactions were recorded.
+INFO | 2025-10-17 16:30:03 | main | 213 | Successfully processed query and returning response.
+INFO | 2025-10-17 16:31:05 | main | 155 | Received question: 'are there any rejected transactions?'
+INFO | 2025-10-17 16:31:05 | main | 156 | Full history contains 5 messages.
+INFO | 2025-10-17 16:31:05 | main | 161 | Processed question for date handling: 'are there any rejected transactions?'
+INFO | 2025-10-17 16:31:07 | main | 165 | Retrieved Schemas:
+Table: PSGTMS.REJREASON
+Description: A lookup table for transaction rejection reasons. JOIN with DetailFile1 on RejectReason to find out why a transaction failed.
+Columns:
+- PgmID (int, primary key): The program ID component of the reason code. Used to join with DetailFile1.RejectPgm.
+- RejID (int, primary key): The rejection ID component of the reason code. Used to join with DetailFile1.RejectReason.
+- RejDesc (varchar): The text description of why an item was rejected (e.g., 'Invalid Amount', 'Signature Missing').
+---
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+INFO | 2025-10-17 16:31:08 | main | 175 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.DetailFile1 WHERE Reject = 1;
+INFO | 2025-10-17 16:31:08 | main | 184 | SQL query passed validation.
+INFO | 2025-10-17 16:31:08 | main | 193 | Query executed successfully.
+INFO | 2025-10-17 16:31:09 | main | 205 | Generated Summary: No rejected transactions were found.
+INFO | 2025-10-17 16:31:09 | main | 213 | Successfully processed query and returning response.
+INFO | 2025-10-17 16:37:12 | main | 155 | Received question: 'how many batches were processed last month?'
+INFO | 2025-10-17 16:37:12 | main | 156 | Full history contains 1 messages.
+INFO | 2025-10-17 16:37:12 | main | 161 | Processed question for date handling: 'how many batches were processed between the dates 20250901 and 20250930?'
+INFO | 2025-10-17 16:37:13 | main | 166 | Retrieved Schemas:
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+---
+Table: PSGTMS.TDF_BatchValues
+Description: This is a lookup table that contains the descriptions for different batch status codes.
+Columns:
+- BatchValue (int, primary key): The numeric code for a batch status.
+- BatchValueDesc (varchar(50)): The plain English description of the status  A value of 'Process Done' means the batch is processed.
+INFO | 2025-10-17 16:37:14 | main | 176 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.BATCHFILE WHERE ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 16:37:14 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 16:37:15 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 16:37:16 | main | 206 | Generated Summary: A total of 43 batches were processed between the dates 2025-09-01 and 2025-09-30.
+INFO | 2025-10-17 16:37:16 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 16:38:10 | main | 155 | Received question: 'how many transactions were there?'
+INFO | 2025-10-17 16:38:10 | main | 156 | Full history contains 3 messages.
+INFO | 2025-10-17 16:38:10 | main | 161 | Processed question for date handling: 'how many transactions were there?'
+INFO | 2025-10-17 16:38:11 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+---
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+INFO | 2025-10-17 16:38:12 | main | 176 | Generated SQL: SELECT SUM(TotalTrans) FROM PSGTMS.BATCHFILE WHERE ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 16:38:12 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 16:38:12 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 16:38:13 | main | 206 | Generated Summary: A total of 541 transactions were processed last month.
+INFO | 2025-10-17 16:38:13 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 16:38:43 | main | 155 | Received question: 'how many transactions rejected?'
+INFO | 2025-10-17 16:38:43 | main | 156 | Full history contains 5 messages.
+INFO | 2025-10-17 16:38:43 | main | 161 | Processed question for date handling: 'how many transactions rejected?'
+INFO | 2025-10-17 16:38:44 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.REJREASON
+Description: A lookup table for transaction rejection reasons. JOIN with DetailFile1 on RejectReason to find out why a transaction failed.
+Columns:
+- PgmID (int, primary key): The program ID component of the reason code. Used to join with DetailFile1.RejectPgm.
+- RejID (int, primary key): The rejection ID component of the reason code. Used to join with DetailFile1.RejectReason.
+- RejDesc (varchar): The text description of why an item was rejected (e.g., 'Invalid Amount', 'Signature Missing').
+---
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+INFO | 2025-10-17 16:38:46 | main | 176 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.DetailFile1 WHERE Reject = 1 AND ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 16:38:46 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 16:38:46 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 16:38:47 | main | 206 | Generated Summary: There were 73 rejected transactions last month.
+INFO | 2025-10-17 16:38:47 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 16:39:49 | main | 155 | Received question: 'what is the rejection reason for each transaction?'
+INFO | 2025-10-17 16:39:49 | main | 156 | Full history contains 7 messages.
+INFO | 2025-10-17 16:39:49 | main | 161 | Processed question for date handling: 'what is the rejection reason for each transaction?'
+INFO | 2025-10-17 16:39:50 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.REJREASON
+Description: A lookup table for transaction rejection reasons. JOIN with DetailFile1 on RejectReason to find out why a transaction failed.
+Columns:
+- PgmID (int, primary key): The program ID component of the reason code. Used to join with DetailFile1.RejectPgm.
+- RejID (int, primary key): The rejection ID component of the reason code. Used to join with DetailFile1.RejectReason.
+- RejDesc (varchar): The text description of why an item was rejected (e.g., 'Invalid Amount', 'Signature Missing').
+---
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+INFO | 2025-10-17 16:39:51 | main | 176 | Generated SQL: SELECT T2.RejDesc FROM PSGTMS.DetailFile1 AS T1 JOIN PSGTMS.REJREASON AS T2 ON T1.RejectPgm = T2.PgmID AND T1.RejectReason = T2.RejID WHERE T1.ProcessDate BETWEEN '20250901' AND '20250930' AND T1.Reject = 1;
+INFO | 2025-10-17 16:39:51 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 16:39:52 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 16:39:54 | main | 206 | Generated Summary: There were a total of 73 rejected transactions last month. Here are the rejection reasons for each transaction:
+
+1. No/Wrong Payee or Company: 3 transactions
+2. Foreign Item Check: 4 transactions
+3. Alternate Account: 1 transaction
+4. Transaction Integrity failure: 3 transactions
+5. Exception No Pay - Unable to Identify Account: 30 transactions
+6. Invalid amount: 4 transactions
+7. No/Invalid Acct.#: 3 transactions
+8. Suspense: 4 transactions
+9. Exception No Pay - Out of Balance: 40 transactions
+10. Invalid account: 20 transactions
+
+If you need more details or a breakdown by specific transactions, feel free to ask!
+INFO | 2025-10-17 16:39:54 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 16:53:57 | main | 155 | Received question: 'shall i get transaction number for each rejected 72 transactions?'
+INFO | 2025-10-17 16:53:57 | main | 156 | Full history contains 9 messages.
+INFO | 2025-10-17 16:53:57 | main | 161 | Processed question for date handling: 'shall i get transaction number for each rejected 72 transactions?'
+INFO | 2025-10-17 16:53:58 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.REJREASON
+Description: A lookup table for transaction rejection reasons. JOIN with DetailFile1 on RejectReason to find out why a transaction failed.
+Columns:
+- PgmID (int, primary key): The program ID component of the reason code. Used to join with DetailFile1.RejectPgm.
+- RejID (int, primary key): The rejection ID component of the reason code. Used to join with DetailFile1.RejectReason.
+- RejDesc (varchar): The text description of why an item was rejected (e.g., 'Invalid Amount', 'Signature Missing').
+---
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+INFO | 2025-10-17 16:53:59 | main | 176 | Generated SQL: SELECT T1.TranNo, T2.RejDesc 
+FROM PSGTMS.DetailFile1 AS T1 
+JOIN PSGTMS.REJREASON AS T2 ON T1.RejectPgm = T2.PgmID AND T1.RejectReason = T2.RejID 
+WHERE T1.Reject = 1 AND T1.ProcessDate >= '20250901' AND T1.ProcessDate <= '20250930';
+INFO | 2025-10-17 16:53:59 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 16:54:00 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 16:54:03 | main | 206 | Generated Summary: There were a total of 73 rejected transactions last month. Here are the transaction numbers for each of the rejected transactions:
+
+1. **Foreign Item Check**: 1, 1, 2, 3
+2. **Alternate Account**: 4, 4
+3. **Transaction Integrity failure**: 7, 7, 7
+4. **Exception No Pay - Unable to Identify Account**: 5 (multiple instances)
+5. **Invalid amount**: 6, 8, 9, 1
+6. **No/Invalid Acct.#**: 1, 3, 8
+7. **Suspense**: 5, 5, 5, 5
+8. **Exception No Pay - Out of Balance**: 4 (multiple instances)
+9. **Invalid account**: 23, 23, 41, 41, 49, 49, 53, 50, 50, 51, 51, 53, 53, 39, 39, 48, 48, 49, 49, 24, 24, 38, 38, 38, 38, 49, 49, 54, 54, 54, 54
+
+If you need further details or a specific breakdown, feel free to ask!
+INFO | 2025-10-17 16:54:03 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 16:57:43 | main | 155 | Received question: 'what is the rejection reason for the transaction number 4 in the batch number 0000556412'
+INFO | 2025-10-17 16:57:43 | main | 156 | Full history contains 11 messages.
+INFO | 2025-10-17 16:57:43 | main | 161 | Processed question for date handling: 'what is the rejection reason for the transaction number 4 in the batch number 0000556412'
+INFO | 2025-10-17 16:57:44 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.REJREASON
+Description: A lookup table for transaction rejection reasons. JOIN with DetailFile1 on RejectReason to find out why a transaction failed.
+Columns:
+- PgmID (int, primary key): The program ID component of the reason code. Used to join with DetailFile1.RejectPgm.
+- RejID (int, primary key): The rejection ID component of the reason code. Used to join with DetailFile1.RejectReason.
+- RejDesc (varchar): The text description of why an item was rejected (e.g., 'Invalid Amount', 'Signature Missing').
+---
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+INFO | 2025-10-17 16:57:46 | main | 176 | Generated SQL: SELECT T2.RejDesc FROM PSGTMS.DetailFile1 AS T1 JOIN PSGTMS.REJREASON AS T2 ON T1.RejectPgm = T2.PgmID AND T1.RejectReason = T2.RejID WHERE T1.TranNo = 4 AND T1.BatchNo = '0000556412' AND T1.Reject = 1;
+INFO | 2025-10-17 16:57:46 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 16:57:47 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 16:57:47 | main | 206 | Generated Summary: No rejected transaction with the number 4 was found in the batch number 0000556412.
+INFO | 2025-10-17 16:57:47 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 17:12:14 | main | 155 | Received question: 'how many transactions got rejected in batch number 0000705441 ?'
+INFO | 2025-10-17 17:12:14 | main | 156 | Full history contains 13 messages.
+INFO | 2025-10-17 17:12:14 | main | 161 | Processed question for date handling: 'how many transactions got rejected in batch number 0000705441 ?'
+INFO | 2025-10-17 17:12:15 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+---
+Table: PSGTMS.REJREASON
+Description: A lookup table for transaction rejection reasons. JOIN with DetailFile1 on RejectReason to find out why a transaction failed.
+Columns:
+- PgmID (int, primary key): The program ID component of the reason code. Used to join with DetailFile1.RejectPgm.
+- RejID (int, primary key): The rejection ID component of the reason code. Used to join with DetailFile1.RejectReason.
+- RejDesc (varchar): The text description of why an item was rejected (e.g., 'Invalid Amount', 'Signature Missing').
+INFO | 2025-10-17 17:12:16 | main | 176 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.DetailFile1 WHERE BatchNo = '0000705441' AND Reject = 1;
+INFO | 2025-10-17 17:12:16 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 17:12:16 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 17:12:17 | main | 206 | Generated Summary: No rejected transactions were found for batch number 0000705441.
+INFO | 2025-10-17 17:12:17 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 17:39:18 | main | 155 | Received question: 'how many batches got processed last month?'
+INFO | 2025-10-17 17:39:18 | main | 156 | Full history contains 1 messages.
+INFO | 2025-10-17 17:39:18 | main | 161 | Processed question for date handling: 'how many batches got processed between the dates 20250901 and 20250930?'
+INFO | 2025-10-17 17:39:19 | main | 166 | Retrieved Schemas:
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+---
+Table: PSGTMS.TDF_BatchValues
+Description: This is a lookup table that contains the descriptions for different batch status codes.
+Columns:
+- BatchValue (int, primary key): The numeric code for a batch status.
+- BatchValueDesc (varchar(50)): The plain English description of the status  A value of 'Process Done' means the batch is processed.
+INFO | 2025-10-17 17:39:20 | main | 176 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.BATCHFILE WHERE ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 17:39:20 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 17:39:20 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 17:39:21 | main | 206 | Generated Summary: A total of 43 batches were processed between the dates 2025-09-01 and 2025-09-30.
+INFO | 2025-10-17 17:39:21 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 17:40:00 | main | 155 | Received question: 'how many transactions were there in the batches? '
+INFO | 2025-10-17 17:40:00 | main | 156 | Full history contains 3 messages.
+INFO | 2025-10-17 17:40:00 | main | 161 | Processed question for date handling: 'how many transactions were there in the batches? '
+INFO | 2025-10-17 17:40:01 | main | 166 | Retrieved Schemas:
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+---
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+INFO | 2025-10-17 17:40:02 | main | 176 | Generated SQL: SELECT SUM(TotalTrans) FROM PSGTMS.BATCHFILE WHERE ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 17:40:02 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 17:40:02 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 17:40:04 | main | 206 | Generated Summary: A total of 541 transactions were processed in the batches last month.
+INFO | 2025-10-17 17:40:04 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 17:40:52 | main | 155 | Received question: 'can you list out the batch number?'
+INFO | 2025-10-17 17:40:52 | main | 156 | Full history contains 5 messages.
+INFO | 2025-10-17 17:40:52 | main | 161 | Processed question for date handling: 'can you list out the batch number?'
+INFO | 2025-10-17 17:40:53 | main | 166 | Retrieved Schemas:
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+---
+Table: PSGTMS.TDF_BatchValues
+Description: This is a lookup table that contains the descriptions for different batch status codes.
+Columns:
+- BatchValue (int, primary key): The numeric code for a batch status.
+- BatchValueDesc (varchar(50)): The plain English description of the status  A value of 'Process Done' means the batch is processed.
+INFO | 2025-10-17 17:40:55 | main | 176 | Generated SQL: SELECT BatchNo FROM PSGTMS.BATCHFILE WHERE ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 17:40:55 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 17:40:55 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 17:41:02 | main | 206 | Generated Summary: Here are the batch numbers that were processed last month:
+
+- 0000705441
+- 0000705453
+- 0000705454
+- 0000705467
+- 0000705468
+- 0000505319
+- 0000705488
+- 0000705493
+- 0000705519
+- 0000705520
+- 0000534977
+- 0000705550
+- 0000539202
+- 0000505320
+- 0000505324
+- 0000505325
+- 0000505326
+- 0000544740
+- 0000544741
+- 0000544760
+- 0000544762
+- 0000505328
+- 0000546807
+- 0000505327
+- 0000505329
+- 0000505333
+- 0000505334
+- 0000505335
+- 0000505336
+- 0000549272
+- 0000549446
+- 0000505331
+- 0000505337
+- 0000705685
+- 0000505338
+- 0000705698
+- 0000554494
+- 0000554571
+- 0000705758
+- 0000556412
+- 0000559395
+- 0000560289
+- 0000561414
+
+A total of 43 batches were processed last month.
+INFO | 2025-10-17 17:41:02 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 17:41:28 | main | 155 | Received question: 'Okay fine , any transactions got rejected last month?'
+INFO | 2025-10-17 17:41:28 | main | 156 | Full history contains 7 messages.
+INFO | 2025-10-17 17:41:28 | main | 161 | Processed question for date handling: 'okay fine , any transactions got rejected between the dates 20250901 and 20250930?'
+INFO | 2025-10-17 17:41:29 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.REJREASON
+Description: A lookup table for transaction rejection reasons. JOIN with DetailFile1 on RejectReason to find out why a transaction failed.
+Columns:
+- PgmID (int, primary key): The program ID component of the reason code. Used to join with DetailFile1.RejectPgm.
+- RejID (int, primary key): The rejection ID component of the reason code. Used to join with DetailFile1.RejectReason.
+- RejDesc (varchar): The text description of why an item was rejected (e.g., 'Invalid Amount', 'Signature Missing').
+---
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+INFO | 2025-10-17 17:41:30 | main | 176 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.DetailFile1 WHERE Reject = 1 AND ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 17:41:30 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 17:41:31 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 17:41:32 | main | 206 | Generated Summary: No rejected transactions were found between the dates 2025-09-01 and 2025-09-30.
+INFO | 2025-10-17 17:41:32 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 17:42:30 | main | 155 | Received question: 'is this batch 0000705441 has rejected transactions?
+'
+INFO | 2025-10-17 17:42:30 | main | 156 | Full history contains 9 messages.
+INFO | 2025-10-17 17:42:30 | main | 161 | Processed question for date handling: 'is this batch 0000705441 has rejected transactions?
+'
+INFO | 2025-10-17 17:42:31 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+---
+Table: PSGTMS.REJREASON
+Description: A lookup table for transaction rejection reasons. JOIN with DetailFile1 on RejectReason to find out why a transaction failed.
+Columns:
+- PgmID (int, primary key): The program ID component of the reason code. Used to join with DetailFile1.RejectPgm.
+- RejID (int, primary key): The rejection ID component of the reason code. Used to join with DetailFile1.RejectReason.
+- RejDesc (varchar): The text description of why an item was rejected (e.g., 'Invalid Amount', 'Signature Missing').
+INFO | 2025-10-17 17:42:32 | main | 176 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.DetailFile1 WHERE BatchNo = '0000705441' AND Reject = 1;
+INFO | 2025-10-17 17:42:32 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 17:42:32 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 17:42:33 | main | 206 | Generated Summary: No rejected transactions were found for batch number 0000705441.
+INFO | 2025-10-17 17:42:33 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 17:51:26 | main | 155 | Received question: 'how many batches processed last month?'
+INFO | 2025-10-17 17:51:26 | main | 156 | Full history contains 1 messages.
+INFO | 2025-10-17 17:51:26 | main | 161 | Processed question for date handling: 'how many batches processed between the dates 20250901 and 20250930?'
+INFO | 2025-10-17 17:51:27 | main | 166 | Retrieved Schemas:
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+---
+Table: PSGTMS.TDF_BatchValues
+Description: This is a lookup table that contains the descriptions for different batch status codes.
+Columns:
+- BatchValue (int, primary key): The numeric code for a batch status.
+- BatchValueDesc (varchar(50)): The plain English description of the status  A value of 'Process Done' means the batch is processed.
+INFO | 2025-10-17 17:51:28 | main | 176 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.BATCHFILE WHERE ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 17:51:28 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 17:51:29 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 17:51:30 | main | 206 | Generated Summary: A total of 43 batches were processed between the dates 2025-09-01 and 2025-09-30.
+INFO | 2025-10-17 17:51:30 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 17:51:47 | main | 155 | Received question: 'transactions?'
+INFO | 2025-10-17 17:51:47 | main | 156 | Full history contains 3 messages.
+INFO | 2025-10-17 17:51:47 | main | 161 | Processed question for date handling: 'transactions?'
+INFO | 2025-10-17 17:51:49 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+---
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+INFO | 2025-10-17 17:51:50 | main | 176 | Generated SQL: SELECT COUNT(DISTINCT TranNo) FROM PSGTMS.DetailFile1 WHERE ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 17:51:50 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 17:51:50 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 17:51:51 | main | 206 | Generated Summary: A total of 150 transactions were processed last month.
+INFO | 2025-10-17 17:51:51 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 17:52:52 | main | 155 | Received question: 'how  many batches were processed last month?'
+INFO | 2025-10-17 17:52:52 | main | 156 | Full history contains 1 messages.
+INFO | 2025-10-17 17:52:52 | main | 161 | Processed question for date handling: 'how  many batches were processed between the dates 20250901 and 20250930?'
+INFO | 2025-10-17 17:52:54 | main | 166 | Retrieved Schemas:
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+---
+Table: PSGTMS.TDF_BatchValues
+Description: This is a lookup table that contains the descriptions for different batch status codes.
+Columns:
+- BatchValue (int, primary key): The numeric code for a batch status.
+- BatchValueDesc (varchar(50)): The plain English description of the status  A value of 'Process Done' means the batch is processed.
+INFO | 2025-10-17 17:52:55 | main | 176 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.BATCHFILE WHERE ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 17:52:55 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 17:52:55 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 17:52:56 | main | 206 | Generated Summary: A total of 43 batches were processed between the dates 2025-09-01 and 2025-09-30.
+INFO | 2025-10-17 17:52:56 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 17:53:15 | main | 155 | Received question: 'how many transactions were there?'
+INFO | 2025-10-17 17:53:15 | main | 156 | Full history contains 3 messages.
+INFO | 2025-10-17 17:53:15 | main | 161 | Processed question for date handling: 'how many transactions were there?'
+INFO | 2025-10-17 17:53:16 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+---
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+INFO | 2025-10-17 17:53:18 | main | 176 | Generated SQL: SELECT COUNT(DISTINCT T1.TranNo) FROM PSGTMS.DetailFile1 AS T1 JOIN PSGTMS.BATCHFILE AS T2 ON T1.BatchNo = T2.BatchNo WHERE T2.ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 17:53:18 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 17:53:18 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 17:53:19 | main | 206 | Generated Summary: There were a total of 400 transactions processed last month.
+INFO | 2025-10-17 17:53:19 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 18:30:22 | main | 155 | Received question: 'how many batches were processed last month?
+
+'
+INFO | 2025-10-17 18:30:22 | main | 156 | Full history contains 1 messages.
+INFO | 2025-10-17 18:30:22 | main | 161 | Processed question for date handling: 'how many batches were processed between the dates 20250901 and 20250930?
+
+'
+INFO | 2025-10-17 18:30:23 | main | 166 | Retrieved Schemas:
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+---
+Table: PSGTMS.TDF_BatchValues
+Description: This is a lookup table that contains the descriptions for different batch status codes.
+Columns:
+- BatchValue (int, primary key): The numeric code for a batch status.
+- BatchValueDesc (varchar(50)): The plain English description of the status  A value of 'Process Done' means the batch is processed.
+INFO | 2025-10-17 18:30:24 | main | 176 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.BATCHFILE WHERE ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 18:30:25 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 18:30:25 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 18:30:26 | main | 206 | Generated Summary: A total of 43 batches were processed between the dates 2025-09-01 and 2025-09-30.
+INFO | 2025-10-17 18:30:26 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 18:30:40 | main | 155 | Received question: 'number of transactions?'
+INFO | 2025-10-17 18:30:40 | main | 156 | Full history contains 3 messages.
+INFO | 2025-10-17 18:30:40 | main | 161 | Processed question for date handling: 'number of transactions?'
+INFO | 2025-10-17 18:30:41 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+---
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+INFO | 2025-10-17 18:30:42 | main | 176 | Generated SQL: SELECT SUM(TotalTrans) FROM PSGTMS.BATCHFILE WHERE ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 18:30:42 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 18:30:42 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 18:30:43 | main | 206 | Generated Summary: A total of 541 transactions were processed last month.
+INFO | 2025-10-17 18:30:43 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 18:30:59 | main | 155 | Received question: 'is there transaction got rejected?'
+INFO | 2025-10-17 18:30:59 | main | 156 | Full history contains 5 messages.
+INFO | 2025-10-17 18:30:59 | main | 161 | Processed question for date handling: 'is there transaction got rejected?'
+INFO | 2025-10-17 18:31:00 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.REJREASON
+Description: A lookup table for transaction rejection reasons. JOIN with DetailFile1 on RejectReason to find out why a transaction failed.
+Columns:
+- PgmID (int, primary key): The program ID component of the reason code. Used to join with DetailFile1.RejectPgm.
+- RejID (int, primary key): The rejection ID component of the reason code. Used to join with DetailFile1.RejectReason.
+- RejDesc (varchar): The text description of why an item was rejected (e.g., 'Invalid Amount', 'Signature Missing').
+---
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+INFO | 2025-10-17 18:31:01 | main | 176 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.DetailFile1 WHERE Reject = 1 AND ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 18:31:01 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 18:31:01 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 18:31:02 | main | 206 | Generated Summary: There were 73 rejected transactions last month.
+INFO | 2025-10-17 18:31:02 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 18:32:13 | main | 155 | Received question: 'show me the transaction number which got rejected with  their respective batch number'
+INFO | 2025-10-17 18:32:13 | main | 156 | Full history contains 7 messages.
+INFO | 2025-10-17 18:32:13 | main | 161 | Processed question for date handling: 'show me the transaction number which got rejected with  their respective batch number'
+INFO | 2025-10-17 18:32:14 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.REJREASON
+Description: A lookup table for transaction rejection reasons. JOIN with DetailFile1 on RejectReason to find out why a transaction failed.
+Columns:
+- PgmID (int, primary key): The program ID component of the reason code. Used to join with DetailFile1.RejectPgm.
+- RejID (int, primary key): The rejection ID component of the reason code. Used to join with DetailFile1.RejectReason.
+- RejDesc (varchar): The text description of why an item was rejected (e.g., 'Invalid Amount', 'Signature Missing').
+---
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+INFO | 2025-10-17 18:32:16 | main | 176 | Generated SQL: SELECT T1.TranNo, T1.BatchNo FROM PSGTMS.DetailFile1 AS T1 WHERE T1.Reject = 1 AND T1.ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 18:32:16 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 18:32:16 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 18:32:19 | main | 206 | Generated Summary: A total of 73 rejected transactions were found across 11 batches last month. Here is the breakdown:
+
+- For batch number 0000505320, there were 2 rejected transactions with the numbers: 1, 3.
+- For batch number 0000544740, there were 3 rejected transactions with the numbers: 41, 49, 54.
+- For batch number 0000544741, there were 4 rejected transactions with the numbers: 2, 6, 8, 9.
+- For batch number 0000544760, there were 9 rejected transactions with the numbers: 23, 24, 38, 39, 48, 49, 50, 51, 53.
+- For batch number 0000544762, there was 1 rejected transaction with the number: 1.
+- For batch number 0000546807, there was 1 rejected transaction with the number: 5.
+- For batch number 0000549446, there were 3 rejected transactions with the numbers: 1, 3, 8.
+- For batch number 0000556412, there were 2 rejected transactions with the numbers: 4, 5.
+- For batch number 0000559395, there was 1 rejected transaction with the number: 1.
+- For batch number 0000560289, there was 1 rejected transaction with the number: 7.
+- For batch number 0000705441, there was 1 rejected transaction with the number: 4.
+INFO | 2025-10-17 18:32:19 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 18:35:51 | main | 155 | Received question: 'Why were the transactions got rejected in batch 0000505320?'
+INFO | 2025-10-17 18:35:51 | main | 156 | Full history contains 9 messages.
+INFO | 2025-10-17 18:35:51 | main | 161 | Processed question for date handling: 'Why were the transactions got rejected in batch 0000505320?'
+INFO | 2025-10-17 18:35:53 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+---
+Table: PSGTMS.REJREASON
+Description: A lookup table for transaction rejection reasons. JOIN with DetailFile1 on RejectReason to find out why a transaction failed.
+Columns:
+- PgmID (int, primary key): The program ID component of the reason code. Used to join with DetailFile1.RejectPgm.
+- RejID (int, primary key): The rejection ID component of the reason code. Used to join with DetailFile1.RejectReason.
+- RejDesc (varchar): The text description of why an item was rejected (e.g., 'Invalid Amount', 'Signature Missing').
+INFO | 2025-10-17 18:35:54 | main | 176 | Generated SQL: SELECT REJREASON.RejDesc 
+FROM PSGTMS.DetailFile1 AS T1 
+JOIN PSGTMS.REJREASON AS T2 ON T1.RejectReason = T2.RejID 
+WHERE T1.BatchNo = '0000505320' AND T1.Reject = 1;
+INFO | 2025-10-17 18:35:54 | main | 185 | SQL query passed validation.
+ERROR | 2025-10-17 18:35:54 | main | 191 | Database execution failed for SQL 'SELECT REJREASON.RejDesc 
+FROM PSGTMS.DetailFile1 AS T1 
+JOIN PSGTMS.REJREASON AS T2 ON T1.RejectReason = T2.RejID 
+WHERE T1.BatchNo = '0000505320' AND T1.Reject = 1;': Database Error: (pyodbc.ProgrammingError) ('42000', '[42000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The multi-part identifier "REJREASON.RejDesc" could not be bound. (4104) (SQLExecDirectW)')
+[SQL: SELECT REJREASON.RejDesc 
+FROM PSGTMS.DetailFile1 AS T1 
+JOIN PSGTMS.REJREASON AS T2 ON T1.RejectReason = T2.RejID 
+WHERE T1.BatchNo = '0000505320' AND T1.Reject = 1;]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+INFO | 2025-10-17 18:47:10 | main | 155 | Received question: 'how many batches were processed last month?
+'
+INFO | 2025-10-17 18:47:10 | main | 156 | Full history contains 1 messages.
+INFO | 2025-10-17 18:47:10 | main | 161 | Processed question for date handling: 'how many batches were processed between the dates 20250901 and 20250930?
+'
+INFO | 2025-10-17 18:47:12 | main | 166 | Retrieved Schemas:
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+---
+Table: PSGTMS.TDF_BatchValues
+Description: This is a lookup table that contains the descriptions for different batch status codes.
+Columns:
+- BatchValue (int, primary key): The numeric code for a batch status.
+- BatchValueDesc (varchar(50)): The plain English description of the status  A value of 'Process Done' means the batch is processed.
+INFO | 2025-10-17 18:47:13 | main | 176 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.BATCHFILE WHERE ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 18:47:13 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 18:47:13 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 18:47:14 | main | 206 | Generated Summary: A total of 43 batches were processed between the dates 20250901 and 20250930.
+INFO | 2025-10-17 18:47:14 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 18:47:25 | main | 155 | Received question: 'number of transactions?
+'
+INFO | 2025-10-17 18:47:25 | main | 156 | Full history contains 3 messages.
+INFO | 2025-10-17 18:47:25 | main | 161 | Processed question for date handling: 'number of transactions?
+'
+INFO | 2025-10-17 18:47:27 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+- WorkSrc (varchar, foreign key): The work source code for this item. This is used to find the WSIdx from the WorkSrcDesc table, which is needed to find the rejection reason.
+---
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+INFO | 2025-10-17 18:47:28 | main | 176 | Generated SQL: SELECT SUM(TotalTrans) FROM PSGTMS.BATCHFILE WHERE ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 18:47:28 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 18:47:28 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 18:47:29 | main | 206 | Generated Summary: A total of 541 transactions were processed last month.
+INFO | 2025-10-17 18:47:29 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 18:47:41 | main | 155 | Received question: 'is there any transaction got rejected?
+'
+INFO | 2025-10-17 18:47:41 | main | 156 | Full history contains 5 messages.
+INFO | 2025-10-17 18:47:41 | main | 161 | Processed question for date handling: 'is there any transaction got rejected?
+'
+INFO | 2025-10-17 18:47:42 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.REJREASON
+Description: A lookup table for transaction rejection reasons. JOIN with DetailFile1 on RejectReason to find out why a transaction failed.
+Columns:
+- PgmID (int, primary key): The program ID component of the reason code. Used to join with DetailFile1.RejectPgm.
+- RejID (int, primary key): The rejection ID component of the reason code. Used to join with DetailFile1.RejectReason.
+- RejDesc (varchar): The text description of why an item was rejected (e.g., 'Invalid Amount', 'Signature Missing').
+- WSIdx (int, primary key): The Work Source Index. This is the final part of the key. A value of 0 is a generic, default reason.
+---
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+- WorkSrc (varchar, foreign key): The work source code for this item. This is used to find the WSIdx from the WorkSrcDesc table, which is needed to find the rejection reason.
+INFO | 2025-10-17 18:47:43 | main | 176 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.DetailFile1 WHERE Reject = 1 AND ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 18:47:43 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 18:47:44 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 18:47:45 | main | 206 | Generated Summary: There were 73 rejected transactions last month.
+INFO | 2025-10-17 18:47:45 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 18:47:54 | main | 155 | Received question: 'show me the transaction number which got rejected with their respective batch number
+'
+INFO | 2025-10-17 18:47:54 | main | 156 | Full history contains 7 messages.
+INFO | 2025-10-17 18:47:54 | main | 161 | Processed question for date handling: 'show me the transaction number which got rejected with their respective batch number
+'
+INFO | 2025-10-17 18:47:55 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.REJREASON
+Description: A lookup table for transaction rejection reasons. JOIN with DetailFile1 on RejectReason to find out why a transaction failed.
+Columns:
+- PgmID (int, primary key): The program ID component of the reason code. Used to join with DetailFile1.RejectPgm.
+- RejID (int, primary key): The rejection ID component of the reason code. Used to join with DetailFile1.RejectReason.
+- RejDesc (varchar): The text description of why an item was rejected (e.g., 'Invalid Amount', 'Signature Missing').
+- WSIdx (int, primary key): The Work Source Index. This is the final part of the key. A value of 0 is a generic, default reason.
+---
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+- WorkSrc (varchar, foreign key): The work source code for this item. This is used to find the WSIdx from the WorkSrcDesc table, which is needed to find the rejection reason.
+INFO | 2025-10-17 18:47:56 | main | 176 | Generated SQL: SELECT DISTINCT T1.TranNo, T1.BatchNo FROM PSGTMS.DetailFile1 AS T1 WHERE T1.Reject = 1 AND T1.ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 18:47:56 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 18:47:57 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 18:48:01 | main | 206 | Generated Summary: A total of 28 rejected transactions were found across 11 batches last month. Here is the breakdown:
+
+- For batch number 0000505320, there were 2 rejected transactions with the numbers: 1, 3.
+- For batch number 0000544740, there were 3 rejected transactions with the numbers: 41, 49, 54.
+- For batch number 0000544741, there were 4 rejected transactions with the numbers: 2, 6, 8, 9.
+- For batch number 0000544760, there were 9 rejected transactions with the numbers: 23, 24, 38, 39, 48, 49, 50, 51, 53.
+- For batch number 0000544762, there was 1 rejected transaction with the number: 1.
+- For batch number 0000546807, there was 1 rejected transaction with the number: 5.
+- For batch number 0000549446, there were 3 rejected transactions with the numbers: 1, 3, 8.
+- For batch number 0000556412, there were 2 rejected transactions with the numbers: 4, 5.
+- For batch number 0000559395, there was 1 rejected transaction with the number: 1.
+- For batch number 0000560289, there was 1 rejected transaction with the number: 7.
+- For batch number 0000705441, there was 1 rejected transaction with the number: 4.
+INFO | 2025-10-17 18:48:01 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 18:48:27 | main | 155 | Received question: 'Why were the transactions got rejected in batch 0000505320?
+'
+INFO | 2025-10-17 18:48:27 | main | 156 | Full history contains 9 messages.
+INFO | 2025-10-17 18:48:27 | main | 161 | Processed question for date handling: 'Why were the transactions got rejected in batch 0000505320?
+'
+INFO | 2025-10-17 18:48:29 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+- WorkSrc (varchar, foreign key): The work source code for this item. This is used to find the WSIdx from the WorkSrcDesc table, which is needed to find the rejection reason.
+---
+Table: PSGTMS.REJREASON
+Description: A lookup table for transaction rejection reasons. JOIN with DetailFile1 on RejectReason to find out why a transaction failed.
+Columns:
+- PgmID (int, primary key): The program ID component of the reason code. Used to join with DetailFile1.RejectPgm.
+- RejID (int, primary key): The rejection ID component of the reason code. Used to join with DetailFile1.RejectReason.
+- RejDesc (varchar): The text description of why an item was rejected (e.g., 'Invalid Amount', 'Signature Missing').
+- WSIdx (int, primary key): The Work Source Index. This is the final part of the key. A value of 0 is a generic, default reason.
+INFO | 2025-10-17 18:48:30 | main | 176 | Generated SQL: SELECT REJREASON.RejDesc 
+FROM PSGTMS.DetailFile1 AS T1 
+JOIN PSGTMS.WorkSrcDesc AS T2 ON T1.WorkSrc = T2.WorkSource 
+JOIN PSGTMS.REJREASON AS T3 ON T1.RejectPgm = T3.PgmID 
+    AND T1.RejectReason = T3.RejID 
+    AND (T3.WSIdx = T2.WSIdx OR T3.WSIdx = 0) 
+WHERE T1.BatchNo = '0000505320' AND T1.Reject = 1;
+INFO | 2025-10-17 18:48:30 | main | 185 | SQL query passed validation.
+ERROR | 2025-10-17 18:48:30 | main | 191 | Database execution failed for SQL 'SELECT REJREASON.RejDesc 
+FROM PSGTMS.DetailFile1 AS T1 
+JOIN PSGTMS.WorkSrcDesc AS T2 ON T1.WorkSrc = T2.WorkSource 
+JOIN PSGTMS.REJREASON AS T3 ON T1.RejectPgm = T3.PgmID 
+    AND T1.RejectReason = T3.RejID 
+    AND (T3.WSIdx = T2.WSIdx OR T3.WSIdx = 0) 
+WHERE T1.BatchNo = '0000505320' AND T1.Reject = 1;': Database Error: (pyodbc.ProgrammingError) ('42000', '[42000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The multi-part identifier "REJREASON.RejDesc" could not be bound. (4104) (SQLExecDirectW)')
+[SQL: SELECT REJREASON.RejDesc 
+FROM PSGTMS.DetailFile1 AS T1 
+JOIN PSGTMS.WorkSrcDesc AS T2 ON T1.WorkSrc = T2.WorkSource 
+JOIN PSGTMS.REJREASON AS T3 ON T1.RejectPgm = T3.PgmID 
+    AND T1.RejectReason = T3.RejID 
+    AND (T3.WSIdx = T2.WSIdx OR T3.WSIdx = 0) 
+WHERE T1.BatchNo = '0000505320' AND T1.Reject = 1;]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+INFO | 2025-10-17 19:43:29 | main | 155 | Received question: 'How many batches were processed on last month?'
+INFO | 2025-10-17 19:43:29 | main | 156 | Full history contains 1 messages.
+INFO | 2025-10-17 19:43:29 | main | 161 | Processed question for date handling: 'how many batches were processed on between the dates 20250901 and 20250930?'
+INFO | 2025-10-17 19:43:30 | main | 166 | Retrieved Schemas:
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+---
+Table: PSGTMS.TDF_BatchValues
+Description: This is a lookup table that contains the descriptions for different batch status codes.
+Columns:
+- BatchValue (int, primary key): The numeric code for a batch status.
+- BatchValueDesc (varchar(50)): The plain English description of the status  A value of 'Process Done' means the batch is processed.
+INFO | 2025-10-17 19:43:32 | main | 176 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.BATCHFILE WHERE ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 19:43:32 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 19:43:32 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 19:43:33 | main | 206 | Generated Summary: A total of 43 batches were processed between the dates 2025-09-01 and 2025-09-30.
+INFO | 2025-10-17 19:43:33 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 19:43:54 | main | 155 | Received question: 'how many transactions were there?'
+INFO | 2025-10-17 19:43:54 | main | 156 | Full history contains 3 messages.
+INFO | 2025-10-17 19:43:54 | main | 161 | Processed question for date handling: 'how many transactions were there?'
+INFO | 2025-10-17 19:43:56 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+- WorkSrc (varchar, foreign key): The work source code for this item. This is used to find the WSIdx from the WorkSrcDesc table, which is needed to find the rejection reason.
+---
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+INFO | 2025-10-17 19:43:57 | main | 176 | Generated SQL: SELECT COUNT(DISTINCT T1.TranNo) FROM PSGTMS.DetailFile1 AS T1 JOIN PSGTMS.BATCHFILE AS T2 ON T1.BatchNo = T2.BatchNo WHERE T2.ProcessDate BETWEEN '20250901' AND '20250930';
+INFO | 2025-10-17 19:43:57 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 19:43:58 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 19:43:59 | main | 206 | Generated Summary: A total of 400 transactions were processed last month.
+INFO | 2025-10-17 19:43:59 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 19:54:25 | main | 155 | Received question: 'How many batches were processed on last week?'
+INFO | 2025-10-17 19:54:25 | main | 156 | Full history contains 1 messages.
+INFO | 2025-10-17 19:54:25 | main | 161 | Processed question for date handling: 'how many batches were processed on between the dates 20251006 and 20251012?'
+INFO | 2025-10-17 19:54:26 | main | 166 | Retrieved Schemas:
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+---
+Table: PSGTMS.TDF_BatchValues
+Description: This is a lookup table that contains the descriptions for different batch status codes.
+Columns:
+- BatchValue (int, primary key): The numeric code for a batch status.
+- BatchValueDesc (varchar(50)): The plain English description of the status  A value of 'Process Done' means the batch is processed.
+INFO | 2025-10-17 19:54:27 | main | 176 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.BATCHFILE WHERE ProcessDate BETWEEN '20251006' AND '20251012';
+INFO | 2025-10-17 19:54:27 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 19:54:27 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 19:54:28 | main | 206 | Generated Summary: A total of 4 batches were processed between the dates 2025-10-06 and 2025-10-12.
+INFO | 2025-10-17 19:54:28 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 19:54:48 | main | 155 | Received question: 'how many transactions were there?'
+INFO | 2025-10-17 19:54:48 | main | 156 | Full history contains 3 messages.
+INFO | 2025-10-17 19:54:48 | main | 161 | Processed question for date handling: 'how many transactions were there?'
+INFO | 2025-10-17 19:54:49 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+- WorkSrc (varchar, foreign key): The work source code for this item. This is used to find the WSIdx from the WorkSrcDesc table, which is needed to find the rejection reason.
+---
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. **This table is the ONLY source for counting ACCEPTED items.**
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table to get the mode description (BatchModeDesc).
+    - BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile tables.
+- ProcessDate (char(8)): The date the batch was processed, likely in YYYYMMDD format. Use this for questions about "today", "yesterday", or specific dates.
+- WorkDate (char(8)): The date the work was performed, in YYYYMMDD format.
+- StartTime (char(6)): The time the batch processing started, likely in HHMMSS format.
+- EndTime (char(6)): The time the batch processing finished.
+- CheckCount (smallint): The final count of *accepted* check items in the batch after rejections.**ALWAYS use this column to count accepted checks.**
+- StubCount (smallint): The final count of *accepted* stub items in the batch after rejections.**ALWAYS use this column to count accepted stubs.**
+- TotalTrans (smallint): The final, updated count of all accepted items in the batch. **Use SUM(TotalTrans) to get the total number of transactions.**
+- CheckTotal (money): The total monetary value of all checks in this batch.
+- StubTotal (money): The total monetary value of all stubs in this batch.
+- BatchValue (int, foreign key): A numeric code representing the current status of the batch. This links to the TDF_BatchValues table to get the status description (BatchValueDesc).
+INFO | 2025-10-17 19:54:50 | main | 176 | Generated SQL: SELECT SUM(TotalTrans) FROM PSGTMS.BATCHFILE WHERE ProcessDate BETWEEN '20251006' AND '20251012';
+INFO | 2025-10-17 19:54:50 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 19:54:50 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 19:54:51 | main | 206 | Generated Summary: A total of 149 transactions were processed last week.
+INFO | 2025-10-17 19:54:51 | main | 214 | Successfully processed query and returning response.
+INFO | 2025-10-17 19:55:21 | main | 155 | Received question: 'is there any transaction got rejected?'
+INFO | 2025-10-17 19:55:21 | main | 156 | Full history contains 5 messages.
+INFO | 2025-10-17 19:55:21 | main | 161 | Processed question for date handling: 'is there any transaction got rejected?'
+INFO | 2025-10-17 19:55:22 | main | 166 | Retrieved Schemas:
+Table: PSGTMS.REJREASON
+Description: A lookup table for transaction rejection reasons. JOIN with DetailFile1 on RejectReason to find out why a transaction failed.
+Columns:
+- PgmID (int, primary key): The program ID component of the reason code. Used to join with DetailFile1.RejectPgm.
+- RejID (int, primary key): The rejection ID component of the reason code. Used to join with DetailFile1.RejectReason.
+- RejDesc (varchar): The text description of why an item was rejected (e.g., 'Invalid Amount', 'Signature Missing').
+- WSIdx (int, primary key): The Work Source Index. This is the final part of the key. A value of 0 is a generic, default reason.
+---
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. **This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables.**
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- SeqNo (int): The sequence number of this transaction within its batch.
+- ProcessDate (char(8)): The date the transaction was processed, in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. the ItemType refers as follows : 0 = 'Cheque', 1 = 'Stub' , 8 ='Envelope' , 9 = 'Correspondences"
+- Amount (money): The monetary value of this single transaction.
+- CheckNbr (bigint): The check number for this transaction.
+- AcctNo (varchar(50)): The account number associated with the transaction.
+- RTNo (varchar(20)): The bank routing number associated with the transaction.
+- TranNo (int): The transaction number. **CRITICAL: Multiple items (rows) can belong to a single transaction.** All rows with the same TranNo are part of the same transaction. To count the number of unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectReason (smallint, foreign key): A numeric code for the rejection reason. This links to the RejectReasons table.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. Use this along with RejectReason to join to the REJREASON table.
+- RejectUsercode (varchar): The user who marked the item as rejected.
+- WorkSrc (varchar, foreign key): The work source code for this item. This is used to find the WSIdx from the WorkSrcDesc table, which is needed to find the rejection reason.
+INFO | 2025-10-17 19:55:23 | main | 176 | Generated SQL: SELECT COUNT(*) FROM PSGTMS.DetailFile1 WHERE Reject = 1 AND ProcessDate BETWEEN '20251006' AND '20251012';
+INFO | 2025-10-17 19:55:23 | main | 185 | SQL query passed validation.
+INFO | 2025-10-17 19:55:24 | main | 194 | Query executed successfully.
+INFO | 2025-10-17 19:55:25 | main | 206 | Generated Summary: No rejected transactions were found for last week.
+INFO | 2025-10-17 19:55:25 | main | 214 | Successfully processed query and returning response.

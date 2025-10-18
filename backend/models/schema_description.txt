@@ -1,0 +1,86 @@
+# This file contains a curated list of the most important tables and columns for answering business questions.
+
+Table: PSGTMS.BATCHFILE
+Description: Contains a summary record for each batch. This table is the ONLY source for counting ACCEPTED items. Its full name is PSGTMS.BATCHFILE.
+Columns:
+- SiteId (smallint, primary key): The ID of the site where the batch was processed.
+- BatchNo (char(10), primary key): The unique number for this batch. This is used to link to the individual transactions in the DetailFile1 table.
+- ProcessDate (char(8)): The date the batch was processed in YYYYMMDD format.
+- WorkDate (char(8)): The date the work was performed in YYYYMMDD format.
+- CheckCount (smallint): The final count of ACCEPTED check items in the batch. ALWAYS use this column to count accepted checks.
+- StubCount (smallint): The final count of ACCEPTED stub items in the batch. ALWAYS use this column to count accepted stubs.
+- TotalTrans (smallint): The final, updated count of all ACCEPTED items (checks and stubs) in the batch.
+- BatchValue (int, foreign key): A numeric code for the current status of the batch. This links to the TDF_BatchValues table on the BatchValue column.
+- BatchMode (smallint, foreign key): A numeric code for the processing mode of the batch. This links to the TDF_BatchModes table on the BatchMode column.
+
+---
+
+Table: PSGTMS.DetailFile1
+Description: Contains a record for every individual transaction item. This table shows the CURRENT state of a transaction. For the HISTORY of changes, you MUST use the PSGAuditStats tables. Its full name is PSGTMS.DetailFile1.
+Columns:
+- DetailKey (bigint, primary key): A unique key for this transaction item.
+- BatchNo (char(10), foreign key): Links the transaction back to the BATCHFILE table.
+- TranNo (int): The transaction number. CRITICAL: Multiple items (rows) can belong to a single transaction if they share the same TranNo. To count unique transactions, you MUST use COUNT(DISTINCT TranNo).
+- ProcessDate (char(8)): The date the transaction was processed in YYYYMMDD format.
+- ItemType (smallint): A numeric code for the document type. Examples: 0 = 'Cheque', 1 = 'Stub', 8 = 'Envelope'.
+- Amount (money): The monetary value of this single transaction.
+- Reject (smallint): A flag indicating if the transaction was rejected. 0 = accepted/unrejected, 1 = rejected.
+- RejectPgm (smallint, foreign key): The 'program ID' part of the rejection reason. This is used with RejectReason and WorkSrc to join to the REJREASON table.
+- RejectReason (smallint, foreign key): The 'rejection ID' part of the rejection reason. This is used with RejectPgm and WorkSrc to join to the REJREASON table.
+- WorkSrc (varchar, foreign key): The work source code. This is used to join with the WorkSrcDesc table to find the WSIdx needed for the rejection reason.
+
+---
+
+Table: PSGTMS.TDF_BatchValues
+Description: This is a lookup table for batch status descriptions. JOIN with BATCHFILE on the BatchValue column. Its full name is PSGTMS.TDF_BatchValues.
+Columns:
+- BatchValue (int, primary key): The numeric code for a batch status.
+- BatchValueDesc (varchar(50)): The plain English description of the status. A value of 'Process Done' means the batch is finished processing.
+
+---
+
+Table: PSGTMS.TDF_BatchModes
+Description: This is a lookup table for batch mode descriptions. JOIN with BATCHFILE on the BatchMode column. Its full name is PSGTMS.TDF_BatchModes.
+Columns:
+- BatchMode (smallint, primary key): The numeric code for a batch mode.
+- BatchModeDesc (varchar): The plain English description of the mode (e.g., 'Standard Processing').
+
+---
+
+Table: PSGTMS.WorkSrcDesc
+Description: This is a lookup table to find the WSIdx for a given work source. JOIN with DetailFile1 on WorkSrc = WorkSource. Its full name is PSGTMS.WorkSrcDesc.
+Columns:
+- WorkSource (varchar, primary key): The work source code. This links to the WorkSrc column in the DetailFile1 table.
+- WSIdx (int): The Work Source Index, used as part of the key to find the correct rejection reason.
+
+---
+
+Table: PSGTMS.REJREASON
+Description: A lookup table for transaction rejection reasons. Finding the correct reason requires a complex join with DetailFile1 and WorkSrcDesc. Its full name is PSGTMS.REJREASON.
+Columns:
+- PgmID (int, primary key): The program ID component. Joins with DetailFile1.RejectPgm.
+- RejID (int, primary key): The rejection ID component. Joins with DetailFile1.RejectReason.
+- WSIdx (int, primary key): The Work Source Index component. A value of 0 is a generic, default reason.
+- RejDesc (varchar): The text description of why an item was rejected (e.g., 'Invalid Amount').
+
+---
+
+Table: PSGAuditStats.tblAuditLogMaster
+Description: Tracks the history of changes to data. Use this for any question about 'audit history', 'change logs', or 'what a user updated or changed'. Its full name is PSGAuditStats.tblAuditLogMaster.
+Columns:
+- LogId (bigint, primary key): The unique ID for the audit log event. Used to JOIN with tblAuditLogDetail.
+- BatchNo (char): The batch number that was affected by this audit event.
+- TranNo (int): The transaction number that was affected by this audit event.
+- Usercode (char): The ID of the user who performed the action.
+- Action (varchar): A description of the action that was performed (e.g., 'Update', 'Delete').
+- LogDateTime (datetime): The exact timestamp of the audit log event.
+
+---
+
+Table: PSGAuditStats.tblAuditLogDetail
+Description: Contains the specific details of what changed, showing 'before' and 'after' values. You MUST use this table to answer "which fields were changed?". Its full name is PSGAuditStats.tblAuditLogDetail.
+Columns:
+- LogId (bigint, foreign key): The ID that links this record back to tblAuditLogMaster.
+- FieldName (varchar): The name of the database field that was changed.
+- OldValue (varchar): The value of the field before the change.
+- NewValue (varchar): The value of the field after the change.
